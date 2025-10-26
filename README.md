@@ -1,7 +1,9 @@
-Golang TProxy [![GoDoc](https://godoc.org/github.com/LiamHaworth/go-tproxy?status.svg)](https://godoc.org/github.com/LiamHaworth/go-tproxy) [![Go Report Card](https://goreportcard.com/badge/github.com/LiamHaworth/go-tproxy)](https://goreportcard.com/report/github.com/LiamHaworth/go-tproxy)
+Zig TProxy
 =============
 
-Golang TProxy provides an easy to use wrapper for the [Linux Transparent Proxy][1] functionality.
+Zig TProxy provides an easy to use wrapper for the [Linux Transparent Proxy][1] functionality.
+
+> **Note:** This project has been migrated from Go to Zig. For the original Go implementation, see the [Go branch](https://github.com/LiamHaworth/go-tproxy/tree/go-version).
 
 Transparent Proxy (TProxy for short) provides the ability to transparently proxy traffic through a userland
 program without the need for conntrack overhead caused by using NAT to force the traffic into the proxy.
@@ -22,8 +24,13 @@ Preparing a socket to receive connections with TProxy is really no different tha
 setting up a socket to listen for connections. The only difference in the process is before the socket is bound,
 the `IP_TRANSPARENT` socket option.
 
-```go
-syscall.SetsockoptInt(fileDescriptor, syscall.SOL_IP, syscall.IP_TRANSPARENT, 1)
+```zig
+try os.setsockopt(
+    sockfd,
+    SOL_IP,
+    IP_TRANSPARENT,
+    &std.mem.toBytes(@as(c_int, 1)),
+);
 ```
 
 #### Step 2 - Setting the `IP_TRANSPARENT` socket option on outbound connections
@@ -62,8 +69,45 @@ Finally add a IPTables rule to catch new traffic on any desired port and send it
 iptables -t mangle -A PREROUTING -p tcp --dport 80 -j TPROXY --tproxy-mark 0x1/0x1 --on-port 8080
 ```
 
-To test this out and see it work, try running the example in `example/tproxy_example.go` on a virtual machine and route
-some traffic through it.
+## Building and Running
+
+This project requires Zig 0.11 or later.
+
+### Build the library
+```sh
+zig build
+```
+
+### Run the example
+```sh
+zig build run
+```
+
+The example application will bind to `0.0.0.0:8080` for both TCP and UDP traffic.
+
+### Usage in Your Project
+
+To use this library in your Zig project, add it as a dependency in your `build.zig`:
+
+```zig
+const tproxy = @import("tproxy");
+
+// Create a TCP listener
+var tcp_listener = try tproxy.TCP.Listener.listen(bind_addr);
+defer tcp_listener.close();
+
+// Accept connections
+var conn = try tcp_listener.accept();
+defer conn.close();
+
+// Dial original destination
+const remote_fd = try conn.dialOriginalDestination(false);
+defer os.closeSocket(remote_fd);
+```
+
+### Testing
+
+To test this out and see it work, try running the example on a virtual machine and route some traffic through it using the iptables rules described above.
 
 Contributing
 =============
