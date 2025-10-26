@@ -71,16 +71,30 @@ iptables -t mangle -A PREROUTING -p tcp --dport 80 -j TPROXY --tproxy-mark 0x1/0
 
 ## Building and Running
 
-This project requires Zig 0.11 or later.
+**Requirements:**
+- Zig 0.13.0 or later (recommended: 0.13.0 or 0.15.x)
+- Linux operating system (for TPROXY kernel feature)
+- Root privileges (for IP_TRANSPARENT socket option)
 
-### Build the library
+> **Note**: This code uses `std.posix` which was introduced in Zig 0.12. For older Zig versions (0.11 and earlier), you would need to replace `std.posix` with `std.os`.
+
+### Quick Start
+
+The easiest way to get started is using the included test script:
+
 ```sh
-zig build
+# This will download Zig locally if not installed and build the project
+./test-build.sh
 ```
 
-### Run the example
+### Manual Build
+
 ```sh
-zig build run
+# Build the library and example
+zig build
+
+# Run the example (requires root)
+sudo zig build run
 ```
 
 The example application will bind to `0.0.0.0:8080` for both TCP and UDP traffic.

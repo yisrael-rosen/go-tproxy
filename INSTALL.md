@@ -24,6 +24,7 @@ sudo ln -s /opt/zig-linux-x86_64-0.13.0/zig /usr/local/bin/zig
 
 # Verify installation
 zig version
+# Should output: 0.13.0
 ```
 
 ### Build the Project
