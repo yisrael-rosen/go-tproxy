@@ -1,0 +1,7 @@
+.git
+.gitignore
+legacy-go
+zig-cache
+zig-out
+*.md
+!README.md
