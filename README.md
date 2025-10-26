@@ -1,6 +1,10 @@
 Zig TProxy
 =============
 
+[![CI](https://github.com/yisrael-rosen/go-tproxy/workflows/CI/badge.svg)](https://github.com/yisrael-rosen/go-tproxy/actions/workflows/ci.yml)
+[![Docker Build](https://github.com/yisrael-rosen/go-tproxy/workflows/Docker%20Build/badge.svg)](https://github.com/yisrael-rosen/go-tproxy/actions/workflows/docker.yml)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENCE.md)
+
 Zig TProxy provides an easy to use wrapper for the [Linux Transparent Proxy][1] functionality.
 
 > **Note:** This project has been migrated from Go to Zig. For the original Go implementation, see the [Go branch](https://github.com/LiamHaworth/go-tproxy/tree/go-version).

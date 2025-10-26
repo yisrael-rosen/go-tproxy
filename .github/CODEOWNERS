@@ -1,0 +1,18 @@
+# Code Owners
+# These owners will be requested for review when someone opens a pull request
+
+# Global owners
+*       @yisrael-rosen
+
+# Zig source code
+*.zig   @yisrael-rosen
+
+# Build system
+build.zig       @yisrael-rosen
+Dockerfile      @yisrael-rosen
+
+# Documentation
+*.md    @yisrael-rosen
+
+# CI/CD
+/.github/       @yisrael-rosen

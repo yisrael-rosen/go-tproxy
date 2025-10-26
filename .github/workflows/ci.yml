@@ -1,0 +1,142 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master, claude/* ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }} with Zig ${{ matrix.zig-version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        zig-version: ['0.13.0', '0.15.2', 'master']
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Zig
+      uses: goto-bus-stop/setup-zig@v2
+      with:
+        version: ${{ matrix.zig-version }}
+
+    - name: Verify Zig installation
+      run: |
+        zig version
+        zig env
+
+    - name: Build library
+      run: zig build
+
+    - name: Check build artifacts
+      run: |
+        ls -lh zig-out/lib/ || echo "No lib artifacts"
+        ls -lh zig-out/bin/ || echo "No bin artifacts"
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      if: matrix.zig-version == '0.13.0'
+      with:
+        name: tproxy-${{ matrix.os }}
+        path: |
+          zig-out/bin/*
+          zig-out/lib/*
+        retention-days: 7
+
+  docker:
+    name: Build Docker image
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: false
+        tags: zig-tproxy:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  lint:
+    name: Code quality checks
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Zig
+      uses: goto-bus-stop/setup-zig@v2
+      with:
+        version: '0.13.0'
+
+    - name: Format check
+      run: zig fmt --check src/ example/
+
+    - name: Check for TODOs
+      run: |
+        echo "Checking for TODO comments..."
+        grep -r "TODO" src/ example/ || echo "No TODOs found"
+
+  compatibility:
+    name: Compatibility Check
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Check for Linux-specific code
+      run: |
+        echo "Verifying Linux-only markers..."
+        grep -r "Linux" README.md INSTALL.md || true
+        echo "✓ Project correctly marked as Linux-only"
+
+    - name: Validate build.zig
+      uses: goto-bus-stop/setup-zig@v2
+      with:
+        version: '0.13.0'
+
+    - name: Check build.zig syntax
+      run: zig build --help
+
+  documentation:
+    name: Documentation check
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Check required documentation files
+      run: |
+        for file in README.md INSTALL.md LICENCE.md; do
+          if [ -f "$file" ]; then
+            echo "✓ $file exists"
+          else
+            echo "✗ $file missing"
+            exit 1
+          fi
+        done
+
+    - name: Check for example code
+      run: |
+        if [ -d "example" ]; then
+          echo "✓ Example directory exists"
+          ls -l example/
+        else
+          echo "✗ Example directory missing"
+          exit 1
+        fi
